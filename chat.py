@@ -10,37 +10,46 @@ class ChatAssistant:
         self.temperature = 0.7
         self.max_tokens = 1000
 
-        # Chat prompt
+        # Chat prompt - more universal Git/GitHub coverage
         self.chat_prompt = PromptTemplate(
             input_variables=["user_input", "chat_history"],
-            template="""You are Gitguy, a helpful AI assistant for Git and GitHub questions.
+            template="""You are Gitguy, a comprehensive AI assistant specialized in all aspects of Git and GitHub.
 
             Chat History:
             {chat_history}
 
             User: {user_input}
 
-            Provide a helpful, accurate response about Git or GitHub. If the question is not Git-related, politely redirect to Git topics.
+            Provide a detailed, accurate, and helpful response about Git or GitHub. 
+            You should universally answer any type of Git/GitHub-related question, including:
+            - Basic commands and concepts
+            - Advanced workflows and best practices
+            - GitHub features, APIs, CI/CD, and integrations
+            - Troubleshooting and error resolution
+            - Common pitfalls and real-world tips
+
+            If the user asks something unrelated to Git/GitHub, politely redirect them back to Git topics.
 
             Response guidelines:
-            - Be friendly and encouraging, especially for beginners
-            - Provide specific commands when relevant
-            - Explain concepts clearly with examples
-            - If giving commands, format them as code blocks
-            - Keep responses concise but comprehensive
-            - If you don't know something, admit it and suggest alternatives
+            - Be friendly, encouraging, and patient, especially for beginners
+            - Provide specific commands with explanations and examples
+            - Explain concepts clearly with step-by-step instructions
+            - Format commands as code blocks for easy copying
+            - Include tips, common pitfalls, and best practices
+            - Handle both basic and advanced Git/GitHub questions
+            - If unsure, admit it and suggest reliable resources
 
             Response:"""
         )
 
         # Initialize memory for conversation history
         self.memory = ConversationBufferWindowMemory(
-            k=5,  # Keep last 5 exchanges
+            k=5,
             memory_key="chat_history",
             return_messages=True
         )
 
-        # Create chain using new LangChain syntax
+        # Create chain using LangChain syntax
         self.chain = self.chat_prompt | self.llm
 
     def update_settings(self, temperature, max_tokens):
@@ -51,70 +60,44 @@ class ChatAssistant:
         self.llm.max_tokens = max_tokens
 
     def chat(self, user_input):
-        """Chat with the user about Git topics"""
+        """Chat with the user universally about Git/GitHub"""
         try:
-            # Clean the input
             clean_input = user_input.strip()
+            print(f"Debug: User input: {clean_input}")
 
-            # Check if input is Git-related
-            if not self._is_git_related(clean_input):
-                return "I'm here to help with Git and GitHub questions! Could you ask me something about version control, repositories, or Git commands?"
+            # Always let LLM handle response
+            response = self.chain.invoke({"user_input": clean_input, "chat_history": ""})
+            print(f"Debug: LLM response: {response}")
 
-            # Get response from AI
-            response = self.chain.invoke({"user_input": clean_input})
-
-            # Clean up response
-            clean_response = self._clean_response(response)
-
-            return clean_response
+            return self._clean_response(response)
 
         except Exception as e:
             print(f"Error in chat: {e}")
-            return "I apologize, but I'm having trouble processing your question right now. Please try again or ask about a specific Git command."
-
-    def _is_git_related(self, user_input):
-        """Check if the user input is related to Git/GitHub"""
-        git_keywords = [
-            'git', 'github', 'repository', 'repo', 'commit', 'branch', 'merge',
-            'push', 'pull', 'clone', 'fork', 'pull request', 'pr', 'conflict',
-            'rebase', 'reset', 'revert', 'stash', 'tag', 'remote', 'origin',
-            'main', 'master', 'checkout', 'add', 'status', 'log', 'diff',
-            'blame', 'bisect', 'cherry-pick', 'submodule', 'workflow', 'ci/cd'
-        ]
-
-        input_lower = user_input.lower()
-        return any(keyword in input_lower for keyword in git_keywords)
+            if "API key" in str(e) or "authentication" in str(e).lower():
+                return "There seems to be an issue with the API key. Please check your .env file and ensure it's set correctly."
+            elif "network" in str(e).lower() or "connection" in str(e).lower():
+                return "Network error occurred. Please check your internet connection and try again."
+            else:
+                return "I’m having trouble processing your question right now. Please try again."
 
     def _clean_response(self, response):
         """Clean up the AI response"""
-        # Remove any unwanted prefixes or formatting
-        lines = response.strip().split('\n')
-        clean_lines = []
-
-        for line in lines:
-            line = line.strip()
-            if line and not line.startswith('Assistant:') and not line.startswith('AI:'):
-                clean_lines.append(line)
-
+        lines = response.content.strip().split('\n')
+        clean_lines = [line.strip() for line in lines if line and not line.startswith(('Assistant:', 'AI:'))]
         return '\n'.join(clean_lines).strip()
 
     def get_chat_history(self):
         """Get the current chat history"""
         try:
-            # Get memory variables
             memory_vars = self.memory.load_memory_variables({})
             messages = memory_vars.get('chat_history', [])
-
-            # Format messages for display
             formatted_history = []
             for msg in messages:
                 if hasattr(msg, 'type') and msg.type == 'human':
                     formatted_history.append({"role": "user", "content": msg.content})
                 elif hasattr(msg, 'type') and msg.type == 'ai':
                     formatted_history.append({"role": "assistant", "content": msg.content})
-
             return formatted_history
-
         except Exception as e:
             print(f"Error getting chat history: {e}")
             return []

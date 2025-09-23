@@ -17,7 +17,7 @@ class GitguyAssistant:
     def __init__(self):
         self.groq_api_key = os.getenv('GROQ_API_KEY')
         if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY not found in environment variables")
+            raise ValueError("GROQ_API_KEY not found in environment variables. Please check your .env file and ensure the key is set correctly.")
 
         # Initialize LLM
         self.llm = ChatGroq(
