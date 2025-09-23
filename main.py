@@ -66,6 +66,10 @@ class GitguyAssistant:
         """Get a beginner's tutorial"""
         return self.tutorial_generator.get_tutorial(tutorial_type)
 
+    def search_tutorial(self, topic):
+        """Search for tutorials on any GitHub-related topic"""
+        return self.tutorial_generator.search_tutorial(topic)
+
     def troubleshoot_error(self, error_message):
         """Troubleshoot a Git error"""
         return self.conflict_resolver.troubleshoot_error(error_message)

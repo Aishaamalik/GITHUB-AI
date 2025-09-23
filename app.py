@@ -57,10 +57,6 @@ with st.sidebar:
     if 'solved_exercises' not in st.session_state:
         st.session_state.solved_exercises = []
 
-    st.subheader("📊 Learning Progress")
-    st.write(f"Completed Tutorials: {len(st.session_state.completed_tutorials)}")
-    st.write(f"Solved Exercises: {len(st.session_state.solved_exercises)}")
-
     # AI Settings
     st.subheader("⚙️ AI Settings")
     explanation_temp = st.slider("Explanation Temperature", 0.1, 1.0, 0.6, 0.1)
@@ -161,7 +157,49 @@ with tab3:
     st.header("Beginner's Guide")
     st.write("Interactive tutorials for Git and GitHub basics")
 
-    tutorial_type = st.selectbox("Choose a tutorial",
+    # Search functionality
+    st.subheader("🔍 Search Any GitHub Topic")
+    search_topic = st.text_input("Enter any GitHub-related topic (e.g., 'pull requests', 'GitHub Actions', 'forking')")
+
+    if st.button("Search Tutorial") and search_topic:
+        with st.spinner("Generating tutorial..."):
+            tutorial = assistant.search_tutorial(search_topic.strip())
+            st.markdown(f"### {tutorial['title']}")
+            st.write(tutorial['description'])
+
+            # Prerequisites
+            if tutorial['prerequisites']:
+                st.markdown("### Prerequisites")
+                for prereq in tutorial['prerequisites']:
+                    st.write(f"• {prereq}")
+
+            # Steps
+            for i, step in enumerate(tutorial['steps'], 1):
+                with st.expander(f"Step {i}: {step['title']}"):
+                    st.write(step['content'])
+                    if step['commands']:
+                        for cmd in step['commands']:
+                            st.code(cmd, language='bash')
+                    if step['tips']:
+                        st.markdown("**Tips:**")
+                        for tip in step['tips']:
+                            st.write(f"• {tip}")
+
+            # Summary
+            st.markdown("### Summary")
+            st.write(tutorial['summary'])
+
+            # Next steps
+            if tutorial['next_steps']:
+                st.markdown("### Next Steps")
+                for next_step in tutorial['next_steps']:
+                    st.write(f"• {next_step}")
+
+    st.markdown("---")
+
+    # Original predefined tutorials
+    st.subheader("📚 Predefined Tutorials")
+    tutorial_type = st.selectbox("Or choose from popular tutorials:",
         ["Git Setup", "Creating a Repository", "Making Commits",
          "Working with Branches", "Pushing to GitHub", "Collaboration Basics"])
 
@@ -177,10 +215,6 @@ with tab3:
                     if step['commands']:
                         for cmd in step['commands']:
                             st.code(cmd, language='bash')
-                    if st.button(f"Mark Step {i} Complete", key=f"step_{i}"):
-                        if tutorial_type not in st.session_state.completed_tutorials:
-                            st.session_state.completed_tutorials.append(tutorial_type)
-                        st.success(f"Step {i} completed!")
 
 with tab4:
     st.header("Troubleshooting")
