@@ -2,6 +2,7 @@ import streamlit as st
 from main import GitguyAssistant
 import os
 from dotenv import load_dotenv
+from troubleshooting import troubleshooting_tab
 
 # Load environment variables
 load_dotenv()
@@ -217,19 +218,7 @@ with tab3:
                             st.code(cmd, language='bash')
 
 with tab4:
-    st.header("Troubleshooting")
-    st.write("Get solutions for common Git/GitHub errors")
-
-    error_message = st.text_area("Paste your error message here")
-    if st.button("Troubleshoot") and error_message:
-        with st.spinner("Finding solution..."):
-            solution = assistant.troubleshoot_error(error_message)
-            st.markdown("### Solution")
-            st.write(solution['explanation'])
-            if solution['commands']:
-                st.markdown("### Commands to Fix")
-                for cmd in solution['commands']:
-                    st.code(cmd, language='bash')
+    troubleshooting_tab(assistant)
 
 with tab5:
     st.header("AI Chat Assistant")

@@ -237,6 +237,43 @@ Rules:
                 ],
                 "prevention": "Use personal access tokens instead of passwords for GitHub"
             }
+        elif "would be overwritten by merge" in error_lower:
+            return {
+                "error_type": "Local Changes Overwrite",
+                "explanation": "This error occurs because you have uncommitted local changes in your working directory or staging area, and Git is trying to merge or pull changes from the remote repository. If you proceed, your local changes would be lost. The cause is typically having modified files that conflict with incoming changes from the remote branch.",
+                "solution": [
+                    "Option 1: Stash your changes (recommended if you want to keep them temporarily)",
+                    "Check the status of your repository to see what files are modified",
+                    "Stash your local changes to save them temporarily",
+                    "Pull the remote changes to update your branch",
+                    "Apply your stashed changes back to the working directory",
+                    "Resolve any conflicts if they arise after applying the stash",
+                    "Option 2: Commit your changes (if they are ready)",
+                    "Stage your changes",
+                    "Commit your changes with a meaningful message",
+                    "Pull the remote changes",
+                    "Resolve any merge conflicts if they occur",
+                    "Option 3: Discard your changes (if you don't need them)",
+                    "Reset your working directory to discard changes",
+                    "Pull the remote changes"
+                ],
+                "commands": [
+                    "# Option 1: Stash",
+                    "git status",
+                    "git stash push -m 'Stashing local changes before merge'",
+                    "git pull origin <branch-name>",
+                    "git stash pop",
+                    "git status # Check for any conflicts after popping stash",
+                    "# Option 2: Commit",
+                    "git add .",
+                    "git commit -m 'Commit local changes before merge'",
+                    "git pull origin <branch-name>",
+                    "# Option 3: Discard",
+                    "git reset --hard HEAD",
+                    "git pull origin <branch-name>"
+                ],
+                "prevention": "Always commit or stash your changes before merging or pulling to avoid overwriting your work. Regularly pull changes from the remote to stay up-to-date and reduce the likelihood of conflicts."
+            }
         else:
             return {
                 "error_type": "Unknown Error",
