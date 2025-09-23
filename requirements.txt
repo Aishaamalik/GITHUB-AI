@@ -1,0 +1,9 @@
+streamlit>=1.28.0
+langchain>=0.0.350
+langchain-groq
+python-dotenv
+json5
+requests
+pytest
+black
+flake8
