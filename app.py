@@ -127,13 +127,35 @@ with tab2:
     if st.button("Resolve Conflict") and conflict_scenario:
         with st.spinner("Analyzing conflict..."):
             result = assistant.resolve_conflict(conflict_scenario)
-            st.markdown("### Resolution Steps")
-            for i, step in enumerate(result['steps'], 1):
-                st.write(f"{i}. {step}")
-            if result['commands']:
+
+            # Display analysis
+            if result.get('analysis'):
+                st.markdown("### Analysis")
+                st.write(result['analysis'])
+
+            # Display resolution steps
+            if result.get('steps'):
+                st.markdown("### Resolution Steps")
+                for i, step in enumerate(result['steps'], 1):
+                    st.write(f"{i}. {step}")
+
+            # Display commands
+            if result.get('commands'):
                 st.markdown("### Commands to Run")
                 for cmd in result['commands']:
                     st.code(cmd, language='bash')
+
+            # Display tips
+            if result.get('tips'):
+                st.markdown("### 💡 Tips")
+                for tip in result['tips']:
+                    st.write(f"• {tip}")
+
+            # Display common mistakes
+            if result.get('common_mistakes'):
+                st.markdown("### ⚠️ Common Mistakes to Avoid")
+                for mistake in result['common_mistakes']:
+                    st.write(f"• {mistake}")
 
 with tab3:
     st.header("Beginner's Guide")

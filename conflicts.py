@@ -11,57 +11,83 @@ class ConflictResolver:
         # Conflict resolution prompt
         self.conflict_prompt = PromptTemplate(
             input_variables=["scenario"],
-            template="""Analyze this Git merge conflict scenario and provide step-by-step resolution guidance:
+            template="""You are an expert Git tutor and DevOps engineer.
+Carefully analyze the following Git merge conflict situation and give a structured, step-by-step resolution plan.
 
-            Scenario: {scenario}
+Scenario:
+{scenario}
 
-            Provide a detailed response in the following JSON format:
-            {{
-                "analysis": "Brief analysis of the conflict situation",
-                "steps": [
-                    "Step 1: Clear description of what to do",
-                    "Step 2: Next action to take",
-                    "Step 3: Continue until resolved"
-                ],
-                "commands": [
-                    "git command1",
-                    "git command2",
-                    "git command3"
-                ],
-                "tips": [
-                    "Helpful tip 1",
-                    "Helpful tip 2"
-                ],
-                "common_mistakes": [
-                    "Mistake to avoid 1",
-                    "Mistake to avoid 2"
-                ]
-            }}
+Your output must be **valid JSON** (no extra text, no explanations outside JSON).
+Always include every required field, even if you need to infer or generalize.
 
-            Focus on practical, actionable steps. Include specific Git commands when applicable.
-            Make sure the JSON is valid and all fields are present."""
+JSON format:
+{{
+    "analysis": "Brief, clear explanation of what type of conflict this is and why it occurred",
+    "steps": [
+        "Step 1: Explain the immediate action (e.g., check status, inspect markers)",
+        "Step 2: Explain how to resolve markers or choose ours/theirs",
+        "Step 3: Next key action",
+        "Final Step: Confirm resolution and commit"
+    ],
+    "commands": [
+        "git status",
+        "git diff",
+        "git checkout --ours <file> # or --theirs",
+        "git add <file>",
+        "git commit -m '...' "
+    ],
+    "tips": [
+        "Practical tip 1 (how to avoid mistakes)",
+        "Practical tip 2 (when to use git mergetool or diff tools)",
+        "Practical tip 3 (test before pushing)"
+    ],
+    "common_mistakes": [
+        "Mistake 1: Forgetting to remove conflict markers",
+        "Mistake 2: Committing unresolved code",
+        "Mistake 3: Not regenerating lockfiles for package.json conflicts"
+    ]
+}}
+
+Rules:
+- Responses must be actionable and beginner-friendly.
+- Always give at least 3 steps, 3 commands, 2 tips, and 2 mistakes.
+- Prefer specific Git commands over vague explanations.
+"""
         )
 
         # Error troubleshooting prompt
         self.error_prompt = PromptTemplate(
             input_variables=["error_message"],
-            template="""Analyze this Git or GitHub error and provide a solution:
+            template="""You are a Git/GitHub troubleshooting assistant.
+Analyze the following error and provide a structured, reliable solution.
 
-            Error: {error_message}
+Error:
+{error_message}
 
-            Provide a detailed response in the following JSON format:
-            {{
-                "error_type": "Type of error (e.g., authentication, merge, push, etc.)",
-                "explanation": "What caused this error and why it occurred",
-                "solution": "Step-by-step solution to fix the error",
-                "commands": [
-                    "git command1",
-                    "git command2"
-                ],
-                "prevention": "How to prevent this error in the future"
-            }}
+Output strictly in **valid JSON** (no extra text outside JSON).
 
-            Make sure the JSON is valid and all fields are present."""
+JSON format:
+{{
+    "error_type": "Categorize clearly (e.g., Authentication, Merge, Permission, Network, Detached HEAD, etc.)",
+    "explanation": "Why this error happened in simple, clear terms",
+    "solution": [
+        "Step 1: Immediate fix",
+        "Step 2: Additional required step",
+        "Step 3: Verify the fix worked"
+    ],
+    "commands": [
+        "git command1",
+        "git command2",
+        "shell command if needed"
+    ],
+    "prevention": "Concise advice on how to avoid this error in future (e.g., proper credential caching, frequent pulls)"
+}}
+
+Rules:
+- Always output step-by-step solutions.
+- Prefer concrete git commands.
+- Keep explanations short and clear.
+"""
         )
 
         # Create chains using new LangChain syntax
@@ -146,14 +172,16 @@ class ConflictResolver:
 
     def _get_fallback_error_solution(self, error_message):
         """Fallback error solution"""
-        # Common error patterns
         error_lower = error_message.lower()
 
         if "permission denied" in error_lower:
             return {
                 "error_type": "Permission Error",
                 "explanation": "Git is unable to access the repository or file due to permission restrictions",
-                "solution": "Check file permissions and ensure you have write access to the repository",
+                "solution": [
+                    "Check file permissions",
+                    "Ensure you have write access to the repository"
+                ],
                 "commands": [
                     "ls -la",
                     "chmod +x .git/hooks/*",
@@ -166,7 +194,11 @@ class ConflictResolver:
             return {
                 "error_type": "Merge Conflict",
                 "explanation": "Conflicting changes between branches that need manual resolution",
-                "solution": "Resolve conflicts manually in affected files",
+                "solution": [
+                    "Open conflicted files",
+                    "Resolve conflicts manually in affected files",
+                    "Stage and commit resolution"
+                ],
                 "commands": [
                     "git status",
                     "git diff",
@@ -179,7 +211,11 @@ class ConflictResolver:
             return {
                 "error_type": "Detached HEAD",
                 "explanation": "You're not on any branch, just at a specific commit",
-                "solution": "Create a new branch or switch to an existing branch",
+                "solution": [
+                    "Decide if you want a new branch or to switch back",
+                    "Create a new branch if needed",
+                    "Checkout the desired branch"
+                ],
                 "commands": [
                     "git branch new-branch-name",
                     "git checkout <branch-name>",
@@ -191,7 +227,10 @@ class ConflictResolver:
             return {
                 "error_type": "Authentication Error",
                 "explanation": "GitHub credentials are incorrect or missing",
-                "solution": "Update your GitHub credentials or use a personal access token",
+                "solution": [
+                    "Update your GitHub credentials",
+                    "Use a personal access token if using HTTPS"
+                ],
                 "commands": [
                     "git config --global credential.helper store",
                     "git remote set-url origin https://<token>@github.com/user/repo.git"
@@ -202,7 +241,10 @@ class ConflictResolver:
             return {
                 "error_type": "Unknown Error",
                 "explanation": "Unable to identify the specific error type",
-                "solution": "Check Git documentation or try basic troubleshooting steps",
+                "solution": [
+                    "Check Git documentation",
+                    "Try basic troubleshooting steps"
+                ],
                 "commands": [
                     "git status",
                     "git log --oneline -5",
