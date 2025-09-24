@@ -353,12 +353,13 @@ st.markdown('<div class="main-header"><h1>🖊️ Gitguy - Your AI Git Assistant
 
 
 # Main content tabs with enhanced styling
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🖊️ Command Helper",
     "💡 Conflict Resolver",
     "📚 Beginner's Guide",
     "⚡ Troubleshooting",
-    "🤖 AI Chat"
+    "🤖 AI Chat",
+    "🔍 Repository Analyzer"
 ])
 
 
@@ -541,7 +542,83 @@ with tab5:
         st.session_state.chat_history = []
         st.rerun()
 
+with tab6:
+    st.header("Repository Analyzer")
+    st.write("Analyze any GitHub repository to get a structured summary of its activity")
 
+    repo_url = st.text_input("Enter GitHub repository URL (e.g., https://github.com/user/repo)")
+    github_token = st.text_input("GitHub Token (optional, for higher rate limits)", type="password")
+
+    if st.button("Analyze Repository") and repo_url:
+        with st.spinner("Analyzing repository..."):
+            result = assistant.analyze_repository(repo_url, github_token if github_token else None)
+
+            if "error" in result:
+                st.error(result["error"])
+            else:
+                # Display repository info
+                repo = result["repository"]
+                if "error" not in repo:
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Stars", repo.get("stars", 0))
+                    with col2:
+                        st.metric("Forks", repo.get("forks", 0))
+                    with col3:
+                        st.metric("Open Issues", repo.get("open_issues", 0))
+                    with col4:
+                        st.metric("Language", repo.get("language", "N/A"))
+
+                    st.markdown(f"### {repo.get('full_name', 'Repository')}")
+                    st.write(repo.get("description", "No description available"))
+                    st.write(f"Created: {repo.get('created_at', 'N/A')} | Updated: {repo.get('updated_at', 'N/A')}")
+                else:
+                    st.error(repo["error"])
+
+                # Display recent commits
+                commits = result["recent_commits"]
+                if commits:
+                    st.markdown("### Recent Commits")
+                    for commit in commits:
+                        st.write(f"- **{commit['sha']}**: {commit['message']} by {commit['author']} ({commit['date']})")
+
+                # Display open issues
+                issues = result["open_issues"]
+                if issues:
+                    st.markdown("### Open Issues")
+                    for issue in issues:
+                        st.write(f"- #{issue['number']}: {issue['title']} (Labels: {', '.join(issue['labels'])}) - {issue['created_at']}")
+
+                # Display open PRs
+                prs = result["open_pull_requests"]
+                if prs:
+                    st.markdown("### Open Pull Requests")
+                    for pr in prs:
+                        st.write(f"- #{pr['number']}: {pr['title']} by {pr['author']} - {pr['created_at']}")
+
+                # Display top contributors
+                contributors = result["top_contributors"]
+                if contributors:
+                    st.markdown("### Top Contributors")
+                    cols = st.columns(len(contributors))
+                    for i, contrib in enumerate(contributors):
+                        with cols[i]:
+                            st.image(contrib["avatar_url"], width=50)
+                            st.write(f"**{contrib['login']}**")
+                            st.write(f"{contrib['contributions']} contributions")
+
+                # Display AI summary
+                summary = result["ai_summary"]
+                if "error" not in summary:
+                    st.markdown("### AI Summary")
+                    st.write(f"**Overview:** {summary.get('overview', 'N/A')}")
+                    st.write(f"**Recent Activity:** {summary.get('recent_activity', 'N/A')}")
+                    st.write(f"**Current Issues:** {summary.get('current_issues', 'N/A')}")
+                    st.write(f"**Pull Requests:** {summary.get('pull_requests', 'N/A')}")
+                    st.write(f"**Contributors:** {summary.get('contributors', 'N/A')}")
+                    st.write(f"**Overall Health:** {summary.get('overall_health', 'N/A')}")
+                else:
+                    st.error(summary["error"])
 
 if __name__ == "__main__":
     st.write("")
