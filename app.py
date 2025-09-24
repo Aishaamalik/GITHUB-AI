@@ -15,7 +15,7 @@ st.set_page_config(
     page_title="Gitguy - AI Git Assistant",
     page_icon="🖊️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Custom CSS
@@ -48,23 +48,7 @@ st.markdown("""
 # Main header
 st.markdown('<div class="main-header"><h1>🖊️ Gitguy - Your AI Git Assistant</h1><p>Get step-by-step help with Git and GitHub</p></div>', unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.markdown('<div class="sidebar-header"><h3>Navigation</h3></div>', unsafe_allow_html=True)
 
-    # Progress tracker
-    if 'completed_tutorials' not in st.session_state:
-        st.session_state.completed_tutorials = []
-    if 'solved_exercises' not in st.session_state:
-        st.session_state.solved_exercises = []
-
-    # AI Settings
-    st.subheader("⚙️ AI Settings")
-    explanation_temp = st.slider("Explanation Temperature", 0.1, 1.0, 0.6, 0.1)
-    chat_temp = st.slider("Chat Temperature", 0.1, 1.0, 0.7, 0.1)
-    max_tokens = st.slider("Max Tokens", 500, 2000, 1200)
-
-    assistant.update_settings(explanation_temp, chat_temp, max_tokens)
 
 # Main content tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -253,23 +237,7 @@ with tab5:
         st.session_state.chat_history = []
         st.rerun()
 
-# Export options
-st.sidebar.markdown("### 📄 Export Options")
-if st.sidebar.button("Download Cheat Sheet"):
-    # This would generate and download a cheat sheet
-    st.sidebar.success("Cheat sheet downloaded!")
 
-if st.sidebar.button("Export Tutorial Progress"):
-    progress_data = {
-        "completed_tutorials": st.session_state.completed_tutorials,
-        "solved_exercises": st.session_state.solved_exercises
-    }
-    st.sidebar.download_button(
-        label="Download Progress",
-        data=str(progress_data),
-        file_name="gitguy_progress.json",
-        mime="application/json"
-    )
 
 if __name__ == "__main__":
     st.write("")
